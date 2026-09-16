@@ -70,3 +70,4 @@ The source files are commented line by line. Deeper guides live under `docs/`:
 | [Go fundamentals (frontend → Go)](docs/go-fundamentals.md)                     | Go concepts you will meet, explained with JS/TS analogies                    |
 | [Architecture: layers and how they connect](docs/architecture.md)              | Every layer in detail, dependency rules, and the full request flow           |
 | [Replication guide: build the same thing elsewhere](docs/replication-guide.md) | Start a new project, add a new resource, and test without a database        |
+| [Glossary (Go + project dictionary)](docs/glossary.md)                         | Every term you meet, from `defer` to `RETURNING`, with meanings and analogies |
