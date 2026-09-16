@@ -178,6 +178,9 @@ in tests.
 - Calls the use case and turns the result into status + JSON.
 - **Error handling**: `errors.Is(err, domain.ErrInvalidProduct)` → 400;
   anything else → log (`ctx.Error`) + generic 500 (no internal detail leak).
+  Every layer logs its own steps with a `[layer]` prefix — run the API, fire a
+  request in Postman, and your terminal shows the request descending the
+  pyramid: `[handler]` → `[usecase]` → `[repository]` → DB.
 
 ### router — the route table
 

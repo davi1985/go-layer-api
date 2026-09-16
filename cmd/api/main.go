@@ -47,6 +47,13 @@ func main() {
 // Separating main from run gives you something in return: you can test
 // run() with a fake config without starting the binary. Good Go practice.
 func run(cfg *config.Config) error {
+	// log.SetFlags configures Go's global logger.
+	//  - LstdFlags:  date + time on every line
+	//  - Lshortfile: add "file.go:line" so you can see WHERE the log came from
+	// When you are learning and testing manually (Postman), being able to
+	// trace a log line back to the code is pure gold.
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+
 	// Creates a context that is CANCELED automatically when the program
 	// receives SIGINT (Ctrl+C) or SIGTERM (used by `docker stop`, `kill`...).
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)

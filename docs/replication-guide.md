@@ -185,8 +185,9 @@ business layer depends on an interface, not a concrete struct.
 1. **Dependencies point inward** — `handler → usecase → repository → db`,
    and `domain` imports no framework.
 2. **`context` as the first parameter** in any I/O function, always.
-3. **Errors**: propagate with `%w`, log in the handler, return a generic
-   message to the client (never raw `err.Error()` on a 500).
+3. **Errors**: propagate with `%w`, return a generic message to the client
+   (never raw `err.Error()` on a 500). While learning, log the flow at each
+   layer with `[layer]` prefixes so you can trace requests in the terminal.
 4. **Parameterized SQL** (`$1, $2`) to avoid injection; `defer rows.Close()`
    after every `Query`; `rows.Err()` after the loop.
 5. **Business validation in the use case**, parsing in the handler. Two kinds

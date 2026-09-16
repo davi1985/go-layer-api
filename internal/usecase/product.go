@@ -14,6 +14,7 @@ package usecase
 import (
 	"context" // context passed from the handler down to the repository
 	"fmt"     // to wrap errors with %w (keep the original cause)
+	"log"     // Go's standard logger: traces each step of this layer
 
 	"github.com/davi1985/go-api/internal/domain"     // entities/validation
 	"github.com/davi1985/go-api/internal/repository" // data contract (interface)
@@ -49,6 +50,7 @@ func NewProductUsecase(repo repository.ProductRepository) ProductUsecase {
 // rule here, but this is exactly where one would go (e.g. cache or
 // authorization).
 func (u *productUsecase) GetProducts(ctx context.Context) ([]domain.Product, error) {
+	log.Printf("[usecase] GetProducts: delegating to the repository")
 	return u.repo.GetProducts(ctx)
 }
 
@@ -56,21 +58,26 @@ func (u *productUsecase) GetProducts(ctx context.Context) ([]domain.Product, err
 // `(u *productUsecase)` is the receiver; `u` is the use case instance.
 func (u *productUsecase) CreateProduct(ctx context.Context, product domain.Product) (domain.Product, error) {
 	// 1) VALIDATION — the business rule runs BEFORE touching the database.
+	log.Printf("[usecase] CreateProduct: validating product")
 	if err := product.Validate(); err != nil {
 		// %w "embeds" the original error inside ErrInvalidProduct. Result:
 		// errors.Is(err, domain.ErrInvalidProduct) works over in the handler
 		// (like an error "instanceof" over the chain of causes).
+		log.Printf("[usecase] CreateProduct: validation failed: %v", err)
 		return domain.Product{}, fmt.Errorf("%w: %s", domain.ErrInvalidProduct, err.Error())
 	}
+	log.Printf("[usecase] CreateProduct: validation passed")
 
 	// 2) PERSISTENCE — delegates to the repository. The database generates the id.
 	id, err := u.repo.CreateProduct(ctx, product)
 	if err != nil {
 		// Real infrastructure error: returned for the handler to decide the status.
+		log.Printf("[usecase] CreateProduct: repository error: %v", err)
 		return domain.Product{}, err
 	}
 
 	// 3) ENRICHES the product with the generated id and returns it to the handler.
+	log.Printf("[usecase] CreateProduct: database generated id=%d, enriching", id)
 	product.ID = id
 	return product, nil
 }

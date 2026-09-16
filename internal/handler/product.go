@@ -11,6 +11,7 @@ package handler
 
 import (
 	"errors"   // errors.Is: compare an error with the domain sentinel
+	"log"      // Go's standard logger: traces each step of this layer
 	"net/http" // HTTP status constants (200, 400, 500...)
 
 	"github.com/davi1985/go-api/internal/domain"  // Product entity and sentinel error
@@ -35,6 +36,8 @@ func NewProductHandler(productUsecase usecase.ProductUsecase) *ProductHandler {
 // GetProducts is the handler for GET /products (list).
 // Gin injects *gin.Context, which carries the request, response and helpers.
 func (h *ProductHandler) GetProducts(ctx *gin.Context) {
+	log.Printf("[handler] GetProducts: fetching products")
+
 	// ctx.Request.Context() propagates the HTTP context to the layers below.
 	// If the client disconnects midway, the whole job is canceled.
 	products, err := h.productUsecase.GetProducts(ctx.Request.Context())
@@ -42,11 +45,13 @@ func (h *ProductHandler) GetProducts(ctx *gin.Context) {
 		// ctx.Error registers the error in gin's log (visible in the terminal).
 		// We do NOT send err.Error() in the JSON: leaking internal details is a
 		// security hole. The client gets a generic message and 500.
+		log.Printf("[handler] GetProducts: usecase error -> 500: %v", err)
 		ctx.Error(err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 		return
 	}
 
+	log.Printf("[handler] GetProducts: sending %d product(s)", len(products))
 	// 200 OK with the product list. Gin serializes the slice to JSON.
 	ctx.JSON(http.StatusOK, products)
 }
@@ -59,24 +64,29 @@ func (h *ProductHandler) CreateProduct(ctx *gin.Context) {
 	// If the JSON is malformed, we reply 400 right away, without touching the
 	// use case.
 	if err := ctx.ShouldBindJSON(&product); err != nil {
+		log.Printf("[handler] CreateProduct: invalid JSON -> 400: %v", err)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	log.Printf("[handler] CreateProduct: received %+v", product)
 
 	created, err := h.productUsecase.CreateProduct(ctx.Request.Context(), product)
 	if err != nil {
 		// errors.Is compares the error CHAIN with the sentinel:
 		// if it was a BUSINESS VALIDATION problem -> the client is wrong, 400.
 		if errors.Is(err, domain.ErrInvalidProduct) {
+			log.Printf("[handler] CreateProduct: business rule violation -> 400: %v", err)
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 		// Otherwise it is a real internal error: log the detail, return generic 500.
+		log.Printf("[handler] CreateProduct: internal error -> 500: %v", err)
 		ctx.Error(err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 		return
 	}
 
+	log.Printf("[handler] CreateProduct: responding 201 with %+v", created)
 	// Success: 201 Created + the full product (already with the DB-generated id).
 	ctx.JSON(http.StatusCreated, created)
 }

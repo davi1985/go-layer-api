@@ -8,6 +8,7 @@ import (
 	"context"      // to put a timeout on the ping
 	"database/sql" // Go's official package that abstracts relational databases
 	"fmt"          // to format errors while keeping the original cause with %w
+	"log"          // Go's standard logger (prints to the terminal)
 	"time"         // durations (pool settings and the ping timeout)
 
 	_ "github.com/lib/pq" // the Postgres driver. The "_" registers the driver without us using it directly here
@@ -56,6 +57,11 @@ func Connect(ctx context.Context, dsn string) (*sql.DB, error) {
 		conn.Close() // ping failed: close the handle so no resource leaks
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
+
+	// Startup confirmation: the REAL pool state via conn.Stats() (open and
+	// idle connections at this moment). The DSN itself is deliberately NOT
+	// logged — it contains the password.
+	log.Printf("database connected (open_conns=%d idle_conns=%d)", conn.Stats().OpenConnections, conn.Stats().Idle)
 
 	return conn, nil // all good: returns the healthy pool
 }

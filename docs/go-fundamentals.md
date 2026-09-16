@@ -106,7 +106,11 @@ if err != nil {                  // the equivalent of `if (err) throw err`
 - `errors.Is(err, SentinelErr)` checks whether the **chain** contains a
   specific error (useful to decide between 400 and 500).
 - `nil` means "no error".
-- Convention: log in the **handler**, never expose details in the client JSON.
+- Convention in this project: every layer logs its own steps with a `[layer]`
+  prefix (`[handler]`, `[usecase]`, `[repository]`), so doing a request in
+  Postman shows you the request descending the pyramid in the terminal. The
+  rule that never changes: **the client JSON stays generic** — a 500 never
+  leaks internal details, no matter how much we log locally.
 
 ## Multiple return values: the `(result, error)` duo
 
