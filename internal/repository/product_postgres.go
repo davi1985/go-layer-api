@@ -1,6 +1,9 @@
-// This file holds the CONCRETE (real) implementation of the ProductRepository
-// contract, using Postgres through database/sql.
+// Package repository holds the data access layer for the application.
 //
+// ProductRepository is the contract (interface) that defines the operations
+// the use case expects from a product repository. The concrete implementation
+// is in product_postgres.go, but the use case does not know that: it only sees
+// the interface.
 // The struct and its fields are PRIVATE (lowercase): its code is only exposed
 // through the NewProductRepository factory, which returns the interface.
 package repository
