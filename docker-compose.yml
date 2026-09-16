@@ -1,0 +1,33 @@
+# docker-compose: starts ONLY the local application database.
+# The Go app runs outside the container (on your terminal) and connects to
+# the database via DATABASE_URL.
+#
+# Useful commands:
+#   docker compose up -d          -> start the database in the background
+#   docker compose down           -> stop the database (data is PRESERVED in the volume)
+#   docker compose down -v        -> stop AND erase the volume (data wiped)
+services:
+  go_db:
+    container_name: go_db               # fixed container name (easier to remember)
+    image: postgres:16-alpine           # lightweight Postgres 16 image
+    environment:
+      POSTGRES_PASSWORD: root # root user password (matches the dev DATABASE_URL)
+      POSTGRES_USER: root     # database user
+      POSTGRES_DB: postgres   # database created automatically on first start
+    ports:
+      - '5432:5432' # exposes Postgres on the HOST port -> Go connects to localhost:5432
+    volumes:
+      # PERSISTENCE: data lives in a named volume (outside the container).
+      # Without this, every time the container starts, the database would
+      # start from scratch.
+      - go_db_data:/var/lib/postgresql/data
+    healthcheck:
+      # Checks whether Postgres is actually accepting connections.
+      # Without a healthcheck, the container "starts" but may not be ready yet.
+      test: ['CMD-SHELL', 'pg_isready -U root -d postgres']
+      interval: 5s  # runs the check every 5 seconds
+      timeout: 5s   # a single check cannot take longer than 5s
+      retries: 10   # up to 10 attempts before marking as "unhealthy"
+
+volumes:
+  go_db_data: # declaration of the named volume used above (docker handles the rest)
