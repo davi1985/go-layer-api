@@ -1,0 +1,14 @@
+# Go
+# Compiled binaries (keep your working tree clean)
+go-api
+*.test
+
+# Dependencies / tools
+/bin/
+
+# Environment secrets — never commit real .env files
+.env
+.env.local
+
+# OS
+.DS_Store
